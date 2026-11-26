@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมสะกดคำ - การใช้ภาษาในการร่างหนังสือ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .bounce {
+            animation: bounce 0.5s ease;
+        }
+        .shake {
+            animation: shake 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 min-h-full">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <!-- Header -->
+        <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 text-center">
+            <h1 class="text-4xl font-bold text-purple-600 mb-2">📚 เกมสะกดคำ</h1>
+            <p class="text-gray-600 text-lg">การใช้ภาษาในการร่างหนังสือ</p>
+        </div>
+
+        <!-- Score Board -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div class="text-center flex-1">
+                    <p class="text-gray-600 text-sm mb-1">เวลาที่เหลือ</p>
+                    <p class="text-3xl font-bold text-red-600" id="timer">5:00</p>
+                </div>
+                <div class="text-center flex-1">
+                    <p class="text-gray-600 text-sm mb-1">พิมพ์ถูกแล้ว</p>
+                    <p class="text-3xl font-bold text-green-600" id="correct-count-display">0/25</p>
+                </div>
+                <div class="text-center flex-1">
+                    <p class="text-gray-600 text-sm mb-1">ข้อปัจจุบัน</p>
+                    <p class="text-3xl font-bold text-blue-600" id="question-number">1</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-6" id="game-area">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl p-6 mb-6">
+                    <p class="text-lg mb-2">🎯 เป้าหมาย: พิมพ์ถูก 25 คำ ภายใน 5 นาที</p>
+                    <p class="text-base mb-3">ฟังคำอ่านแล้วสะกดให้ถูกต้อง:</p>
+                    <p class="text-3xl font-bold mb-4" id="word-display">กดปุ่มเพื่อเริ่ม</p>
+                    <button onclick="speakWord()" class="bg-white text-purple-600 px-8 py-3 rounded-full font-bold text-lg hover:bg-purple-50 transition-all transform hover:scale-105 shadow-lg">
+                        🔊 ฟังคำอ่าน
+                    </button>
+                </div>
+
+                <div class="mb-6">
+                    <label for="answer-input" class="block text-gray-700 font-semibold mb-3 text-lg">พิมพ์คำศัพท์ที่ถูกต้อง:</label>
+                    <input 
+                        type="text" 
+                        id="answer-input" 
+                        class="w-full px-6 py-4 text-2xl border-4 border-purple-300 rounded-xl focus:outline-none focus:border-purple-500 text-center font-semibold"
+                        placeholder="พิมพ์คำตอบที่นี่"
+                    >
+                </div>
+
+                <button onclick="checkAnswer()" class="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-10 py-4 rounded-xl font-bold text-xl hover:from-green-600 hover:to-emerald-600 transition-all transform hover:scale-105 shadow-lg">
+                    ตรวจคำตอบ ✓
+                </button>
+            </div>
+
+            <div id="feedback" class="text-center mt-6 text-xl font-semibold min-h-8"></div>
+        </div>
+
+        <!-- Result Area (Hidden initially) -->
+        <div id="result-area" class="bg-white rounded-2xl shadow-lg p-8 text-center hidden">
+            <div class="mb-6">
+                <p class="text-5xl mb-4" id="result-emoji">🎉</p>
+                <h2 class="text-3xl font-bold text-purple-600 mb-4" id="result-title">เกมจบแล้ว!</h2>
+                <p class="text-2xl mb-2">พิมพ์ถูก: <span class="font-bold text-green-600" id="final-correct">0</span> คำ</p>
+                <p class="text-xl text-gray-600 mb-2">เวลาที่ใช้: <span class="font-bold text-blue-600" id="time-used">0:00</span></p>
+                <p class="text-xl text-gray-600 mb-6">ผลการทดสอบ: <span class="font-bold" id="pass-status">-</span></p>
+                <p class="text-lg text-gray-700 mb-6" id="result-message"></p>
+            </div>
+            <button onclick="restartGame()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-10 py-4 rounded-xl font-bold text-xl hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105 shadow-lg">
+                🔄 เล่นใหม่
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+            { word: 'กฎหมาย', reading: 'กด-หฺมาย' },
+            { word: 'อนุญาต', reading: 'อะ-นุ-ญาต' },
+            { word: 'ออฟฟิศ', reading: 'ออบ-ฟิส' },
+            { word: 'รสชาติ', reading: 'รด-ชาด' },
+            { word: 'หลงใหล', reading: 'หฺลง-ใหล' },
+            { word: 'ทะนุถนอม', reading: 'ทะ-นุ-ถะ-นอม' },
+            { word: 'โพสต์รูป', reading: 'โพด-รูบ' },
+            { word: 'มุกตลก', reading: 'มุก-ตะ-ลก' },
+            { word: 'ลายเซ็น', reading: 'ลาย-เซน' },
+            { word: 'คลินิก', reading: 'คลิ-นิก' },
+            { word: 'ไอศครีม', reading: 'ไอ-ศะ-ครีม' },
+            { word: 'สำอางค์', reading: 'สำ-อาง' },
+            { word: 'อีเมล', reading: 'อี-เมล' },
+            { word: 'สังเกต', reading: 'สัง-เกด' },
+            { word: 'เว็บไซต์', reading: 'เว็บ-ไซต์' },
+            { word: 'ศีรษะ', reading: 'ศี-สะ' },
+            { word: 'สัมมนา', reading: 'สัม-มะ-นา' },
+            { word: 'กาลเทศะ', reading: 'กา-ละ-เท-สะ' },
+            { word: 'เสน่ห์', reading: 'สะ-เน่' },
+            { word: 'สังสรรค์', reading: 'สัง-สัน' },
+            { word: 'คำนวณ', reading: 'คำ-นวน' },
+            { word: 'โลกาภิวัฒน์', reading: 'โล-กา-ภิ-วัด' },
+            { word: 'ปรากฏ', reading: 'ปะ-รา-กด' },
+            { word: 'บุคลากร', reading: 'บุค-คะ-ลา-กอน' },
+            { word: 'ภาพยนตร์', reading: 'ภาบ-พะ-ยน' },
+            { word: 'รถยนต์', reading: 'รด-ยน' }
+        ];
+
+        let currentWordIndex = 0;
+        let correctAnswers = 0;
+        let wrongAnswers = 0;
+        let usedWords = [];
+        let gameStartTime = null;
+        let gameTimer = null;
+        let timeRemaining = 300; // 5 minutes in seconds
+        let gameStarted = false;
+
+        function getRandomWord() {
+            // If all words have been used, return null to indicate no more words
+            if (usedWords.length >= words.length) {
+                return null;
+            }
+            
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * words.length);
+            } while (usedWords.includes(randomIndex));
+            
+            usedWords.push(randomIndex);
+            return words[randomIndex];
+        }
+
+        function startTimer() {
+            if (gameStarted) return;
+            
+            gameStarted = true;
+            gameStartTime = Date.now();
+            
+            gameTimer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color when time is running low
+            const timerElement = document.getElementById('timer');
+            if (timeRemaining <= 30) {
+                timerElement.className = 'text-3xl font-bold text-red-600 animate-pulse';
+            } else if (timeRemaining <= 60) {
+                timerElement.className = 'text-3xl font-bold text-orange-600';
+            }
+        }
+
+        function startNewQuestion() {
+            // Check if we've reached 25 correct answers
+            if (correctAnswers >= 25) {
+                endGame();
+                return;
+            }
+            
+            const currentWord = getRandomWord();
+            if (!currentWord) {
+                // No more words available, end the game
+                endGame();
+                return;
+            }
+            
+            document.getElementById('word-display').textContent = currentWord.reading;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('question-number').textContent = usedWords.length;
+            
+            speakWord();
+        }
+
+        function speakWord() {
+            const wordDisplay = document.getElementById('word-display').textContent;
+            if (wordDisplay === 'กดปุ่มเพื่อเริ่ม') {
+                startTimer(); // Start the timer when first word is played
+                startNewQuestion();
+                return;
+            }
+            
+            const currentWord = words[usedWords[usedWords.length - 1]];
+            const utterance = new SpeechSynthesisUtterance(currentWord.word);
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.8;
+            speechSynthesis.speak(utterance);
+        }
+
+        function checkAnswer() {
+            if (!gameStarted) return;
+            
+            const userAnswer = document.getElementById('answer-input').value.trim();
+            const currentWord = words[usedWords[usedWords.length - 1]];
+            const feedback = document.getElementById('feedback');
+            const gameArea = document.getElementById('game-area');
+            
+            if (!userAnswer) {
+                feedback.textContent = '⚠️ กรุณาพิมพ์คำตอบ';
+                feedback.className = 'text-center mt-6 text-xl font-semibold text-orange-500';
+                return;
+            }
+            
+            if (userAnswer === currentWord.word) {
+                correctAnswers++;
+                feedback.textContent = '🎉 ถูกต้อง! เก่งมาก';
+                feedback.className = 'text-center mt-6 text-xl font-semibold text-green-600 bounce';
+                gameArea.classList.add('bounce');
+                setTimeout(() => gameArea.classList.remove('bounce'), 500);
+                
+                // Check if reached 25 correct answers
+                if (correctAnswers >= 25) {
+                    setTimeout(() => endGame(), 1000);
+                    return;
+                }
+            } else {
+                wrongAnswers++;
+                feedback.textContent = `❌ ผิด! คำที่ถูกต้องคือ "${currentWord.word}"`;
+                feedback.className = 'text-center mt-6 text-xl font-semibold text-red-600 shake';
+                gameArea.classList.add('shake');
+                setTimeout(() => gameArea.classList.remove('shake'), 500);
+            }
+            
+            // Update display
+            document.getElementById('correct-count-display').textContent = `${correctAnswers}/25`;
+            
+            setTimeout(() => {
+                startNewQuestion();
+            }, 1500);
+        }
+
+        function endGame() {
+            // Stop timer
+            if (gameTimer) {
+                clearInterval(gameTimer);
+            }
+            
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('result-area').classList.add('fade-in');
+            
+            // Calculate time used
+            const timeUsed = 300 - timeRemaining;
+            const minutes = Math.floor(timeUsed / 60);
+            const seconds = timeUsed % 60;
+            
+            document.getElementById('final-correct').textContent = correctAnswers;
+            document.getElementById('time-used').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Check if passed (25 correct words within 5 minutes)
+            const passed = correctAnswers >= 25 && timeRemaining > 0;
+            
+            let emoji = '🎉';
+            let message = '';
+            let title = '';
+            let passStatus = '';
+            
+            if (passed) {
+                emoji = '🏆';
+                title = 'ยินดีด้วย! ผ่านการทดสอบ';
+                message = 'คุณพิมพ์ถูก 25 คำภายในเวลาที่กำหนด เก่งมาก!';
+                passStatus = 'ผ่าน';
+                document.getElementById('pass-status').className = 'font-bold text-green-600';
+            } else if (correctAnswers >= 25) {
+                emoji = '⏰';
+                title = 'เกือบผ่านแล้ว!';
+                message = 'คุณพิมพ์ถูก 25 คำแล้ว แต่เกินเวลาที่กำหนด';
+                passStatus = 'ไม่ผ่าน (เกินเวลา)';
+                document.getElementById('pass-status').className = 'font-bold text-orange-600';
+            } else if (timeRemaining <= 0) {
+                emoji = '⏰';
+                title = 'หมดเวลา!';
+                message = `คุณพิมพ์ถูก ${correctAnswers} คำ ต้องการอีก ${25 - correctAnswers} คำ`;
+                passStatus = 'ไม่ผ่าน (หมดเวลา)';
+                document.getElementById('pass-status').className = 'font-bold text-red-600';
+            } else {
+                emoji = '💪';
+                title = 'เกมจบแล้ว!';
+                message = `คุณพิมพ์ถูก ${correctAnswers} คำ ต้องการอีก ${25 - correctAnswers} คำ`;
+                passStatus = 'ไม่ผ่าน';
+                document.getElementById('pass-status').className = 'font-bold text-red-600';
+            }
+            
+            document.getElementById('result-emoji').textContent = emoji;
+            document.getElementById('result-title').textContent = title;
+            document.getElementById('result-message').textContent = message;
+            document.getElementById('pass-status').textContent = passStatus;
+        }
+
+        function restartGame() {
+            // Reset all variables
+            currentWordIndex = 0;
+            correctAnswers = 0;
+            wrongAnswers = 0;
+            usedWords = []; // Reset used words list for new game
+            gameStartTime = null;
+            timeRemaining = 300;
+            gameStarted = false;
+            
+            // Clear timer
+            if (gameTimer) {
+                clearInterval(gameTimer);
+                gameTimer = null;
+            }
+            
+            // Reset display
+            document.getElementById('timer').textContent = '5:00';
+            document.getElementById('timer').className = 'text-3xl font-bold text-red-600';
+            document.getElementById('correct-count-display').textContent = '0/25';
+            document.getElementById('question-number').textContent = '1';
+            document.getElementById('word-display').textContent = 'กดปุ่มเพื่อเริ่ม';
+            document.getElementById('answer-input').value = '';
+            document.getElementById('feedback').textContent = '';
+            
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+        }
+
+        document.getElementById('answer-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Initialize the game display
+        document.getElementById('word-display').textContent = 'กดปุ่มเพื่อเริ่ม';
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'995fc56ea172894c',t:'MTc2MTcxMDQ4Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
